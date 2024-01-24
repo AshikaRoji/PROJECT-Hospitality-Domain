@@ -1,0 +1,85 @@
+1. connected to data source ie fetched CSV files to power bi
+2. transformed all the tables - cleaning
+3. set relationship in data modeling
+4. in dim_date table created calculated columns :
+
+	wn = wn = WEEKNUM(dim_date[date])
+
+	day_type =  
+	VAR wkd = WEEKDAY(dim_date[date],1)
+	RETURN 
+	IF(WKD>5,"weekend" ,"weekday")
+
+5. created all necessary measure 
+	
+	1.  Revenue = SUM((fact_bookings[revenue_realized]))
+	2.  Total_bookings = COUNT(fact_bookings[booking_id])
+	3.  Total_Capacity = SUM(fact_aggregated_bookings[capacity])
+	4.  Total_successful_bookings = SUM(fact_aggregated_bookings[successful_bookings])
+	5.  Total_Cancelled_booking = CALCULATE([Total_bookings],fact_bookings[booking_status] = "cancelled" )
+	6.  Total_no_show_bookings = CALCULATE([Total_bookings],fact_bookings[booking_status] = "no show")
+	7.  Total_checked_out = CALCULATE([Total_bookings],fact_bookings[booking_status] = "checked out")
+	8.  Occupancy % = DIVIDE([Total_successful_bookings],[Total_Capacity],0)
+	9.  Avg_rating = AVERAGE(fact_bookings[ratings_given])
+	10. No_of_days = DATEDIFF(MIN(dim_date[date]),MAX(dim_date[date]),DAY) + 1
+	11. Cancellation % = DIVIDE([Total_Cancelled_booking],[Total_bookings],0)
+	12. No_Show % = DIVIDE([Total_no_show_bookings],[Total_bookings],0)
+	13. Booking % by Platform = DIVIDE([Total_bookings],CALCULATE([Total_bookings],ALL(fact_bookings[booking_platform])))*100
+	14. Booking % by Room class = DIVIDE([Total_bookings],CALCULATE([Total_bookings], ALL(dim_rooms[room_class])))*100
+	15. Average_Daily_Rate(ADR) = DIVIDE([Revenue],[Total_bookings],0)
+	16. Realisation % = 1- ([Cancellation %]+[No_Show %])
+	17. RevPAR (Revenue per available room) = DIVIDE([Revenue],[Total_Capacity])
+	18. DBRN (Daily_Booked_Room_Nights) = DIVIDE([Total_bookings], [No_of_days])
+	19. DSRN (Daily_Sellable_Room_Nights) = DIVIDE([Total_Capacity], [No_of_days])
+	20. DURN(Daily_Utilized_Room_Nights) = DIVIDE([Total_checked_out],[No_of_days])
+	21. Realisation_WoW_change % = 
+					Var selv = IF(HASONEFILTER(dim_date[wn]),SELECTEDVALUE(dim_date[wn]),MAX(dim_date[wn]))
+					var revcw = CALCULATE([Realisation %],dim_date[wn]= selv)
+					var revpw =  CALCULATE([Realisation %],FILTER(ALL(dim_date),dim_date[wn]= selv-1))
+
+					return
+
+					DIVIDE(revcw,revpw,0)-1
+	22. Revenue_WoW_change % = 
+					Var selv = IF(HASONEFILTER(dim_date[wn]),SELECTEDVALUE(dim_date[wn],MAX(dim_date[wn])))
+					VAR revcw = CALCULATE([Revenue],dim_date[wn]= selv)
+					VAR revpw =  CALCULATE([Revenue],FILTER(ALL(dim_date),dim_date[wn]= selv-1))
+
+					return
+
+					DIVIDE(revcw,revpw,0)-1
+	23. Occupancy_WoW_change % = 
+					Var selv = IF(HASONEFILTER(dim_date[wn]),SELECTEDVALUE(dim_date[wn]),MAX(dim_date[wn]))
+					var revcw = CALCULATE([Occupancy %],dim_date[wn]= selv)
+					var revpw =  CALCULATE([Occupancy %],FILTER(ALL(dim_date),dim_date[wn]= selv-1))
+
+					return
+
+					DIVIDE(revcw,revpw,0)-1
+	24. ADR_WoW_change % = 
+				Var selv = IF(HASONEFILTER(dim_date[wn]),SELECTEDVALUE(dim_date[wn]),MAX(dim_date[wn]))
+				var revcw = CALCULATE([ADR (Average_Daily_Rate)],dim_date[wn]= selv)
+				var revpw =  CALCULATE([ADR (Average_Daily_Rate)],FILTER(ALL(dim_date),dim_date[wn]= selv-1))
+
+				return
+
+				DIVIDE(revcw,revpw,0)-1
+	25. Revpar_WoW_change % = 
+					Var selv = IF(HASONEFILTER(dim_date[wn]),SELECTEDVALUE(dim_date[wn]),MAX(dim_date[wn]))
+					var revcw = CALCULATE([RevPAR],dim_date[wn]= selv)
+					var revpw =  CALCULATE([RevPAR],FILTER(ALL(dim_date),dim_date[wn]= selv-1))
+
+					return
+
+					DIVIDE(revcw,revpw,0)-1
+	26. DSRN_WoW_change % = 
+				Var selv = IF(HASONEFILTER(dim_date[wn]),SELECTEDVALUE(dim_date[wn]),MAX(dim_date[wn]))
+				var revcw = CALCULATE([DSRN (Daily_Sellable_Room_Nights)],dim_date[wn]= selv)
+				var revpw =  CALCULATE([DSRN (Daily_Sellable_Room_Nights)],FILTER(ALL(dim_date),dim_date[wn]= selv-1))
+
+				return
+
+
+				DIVIDE(revcw,revpw,0)-1
+
+6. Created necessary visuals to drive insights.
