@@ -3,7 +3,7 @@
 3. set relationship in data modeling
 4. in dim_date table created calculated columns :
 
-	wn = wn = WEEKNUM(dim_date[date])
+	wn = WEEKNUM(dim_date[date])
 
 	day_type =  
 	VAR wkd = WEEKDAY(dim_date[date],1)
